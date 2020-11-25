@@ -10,6 +10,7 @@ btnPrev.setAttribute('disabled',true);
 btnPrev.textContent = 'Previous';
 container.appendChild(btnPrev);
 
+
 const btnNext = document.createElement('button');
 btnNext.setAttribute('disabled',true);
 btnNext.textContent = 'Next';
@@ -19,19 +20,37 @@ container.appendChild(btnNext);
 const btns = document.querySelectorAll('button');
 btns.forEach(function(btn){
     btn.addEventListener('click', ytSearch);
-});
+})
 
 
 
 function ytSearch(e){
     let search = searchTerm.value;
+    console.log(e.target.token);
     search = encodeURIComponent(search); // <-- removes problem characters like a space that can cause API's problems
-    const url = 'https://www.googleapis.com/youtube/v3/search/?part=snippet&key='+api+'&q='+search+'&maxResults=20';
+    let url = 'https://www.googleapis.com/youtube/v3/search/?part=snippet&key=' + api + '&q=' + search + '&maxResults=4';
+    if(e.target.token) {
+        url += '&pageToken='+e.target.token;
+    }
     // document.querySelector('.output').textContent=url;
     // output.textContent = url;
     fetch(url).then(function(rep){
         return rep.json()
-    }).then(function(data){
+    }).then(function (data){
+        if(data.prevPageToken){
+            btnPrev.token = data.prevPageToken;
+            btnPrev.disabled = false;
+        }else{
+            btnPrev.token = false;
+            btnPrev.disabled = true;
+        }
+        if(data.nextPageToken){
+            btnNext.token = data.nextPageToken;
+            btnNext.disabled = false;
+        }else{
+            btnNext.token = false;
+            btnNext.disabled = true;
+        }
         return data.items.map(function(x){
             return {
                 title:x.snippet.title,
@@ -53,6 +72,7 @@ function ytSearch(e){
 function show(data){
     console.log(data);
     console.log(data.length);
+    output.innerHTML ="";
     data.forEach(function(video){
         console.log(video);
         let div= document.createElement('div');
